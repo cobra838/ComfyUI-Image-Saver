@@ -450,11 +450,12 @@ class ImageSaver:
                 os.makedirs(output_path, exist_ok=True)
 
         result_paths: list[str] = list()
-        for image in images:
+        num_images = len(images)
+        for idx, image in enumerate(images):
             i = 255. * image.cpu().numpy()
             img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
-            current_filename_prefix = ImageSaver.get_unique_filename(output_path, filename_prefix, extension)
+            current_filename_prefix = ImageSaver.get_unique_filename(output_path, filename_prefix, extension, batch_size=num_images, batch_index=idx)
             final_filename = f"{current_filename_prefix}.{extension}"
             filepath = os.path.join(output_path, final_filename)
 
@@ -553,12 +554,14 @@ class ImageSaver:
         return prompt
 
     @staticmethod
-    def get_unique_filename(output_path: str, filename_prefix: str, extension: str) -> str:
+    def get_unique_filename(output_path: str, filename_prefix: str, extension: str, batch_size: int = 1, batch_index: int = 0) -> str:
         existing_files = [f for f in os.listdir(output_path) if f.startswith(filename_prefix) and f.endswith(extension)]
 
-        if not existing_files:
+        # For single images with no existing files, return plain filename
+        if batch_size == 1 and not existing_files:
             return f"{filename_prefix}"
 
+        # For batches or when files exist, always use numbered suffix
         suffixes: list[int] = []
         for f in existing_files:
             name, _ = os.path.splitext(f)
@@ -567,8 +570,15 @@ class ImageSaver:
                 suffixes.append(int(parts[-1]))
 
         if suffixes:
-            next_suffix = max(suffixes) + 1
+            # Start numbering after the highest existing suffix
+            base_suffix = max(suffixes) + 1
         else:
-            next_suffix = 1
+            # No numbered files exist yet
+            if existing_files:
+                # Plain file exists, start at 1 (the plain file is effectively 0)
+                base_suffix = 1
+            else:
+                # No files at all, start at 1
+                base_suffix = 1
 
-        return f"{filename_prefix}_{next_suffix:02d}"
+        return f"{filename_prefix}_{base_suffix + batch_index:02d}"
