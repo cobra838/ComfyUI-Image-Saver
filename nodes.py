@@ -41,6 +41,25 @@ def get_timestamp(time_format: str) -> str:
 
     return timestamp
 
+def apply_custom_time_format(filename: str) -> str:
+    """
+    Replace %time_format<strftime_format> patterns with formatted datetime.
+    Example: %time_format<%Y-%m-%d> becomes 2026-01-17
+    """
+    now = datetime.now()
+    # Pattern to match %time_format<XXX> where XXX is any strftime format string
+    # Use negative lookahead to exclude %time_format itself from variable delimiters
+    pattern = r'%time_format<([^>]*)>'
+    def replace_format(match):
+        format_str = match.group(1)
+        try:
+            return now.strftime(format_str)
+        except:
+            # If format is invalid, return original
+            return match.group(0)
+
+    return re.sub(pattern, replace_format, filename)
+
 def save_json(image_info: dict[str, Any] | None, filename: str) -> None:
     try:
         workflow = (image_info or {}).get('workflow')
@@ -53,6 +72,8 @@ def save_json(image_info: dict[str, Any] | None, filename: str) -> None:
         print(f'Failed to save workflow as json due to: {e}, proceeding with the remainder of saving execution')
 
 def make_pathname(filename: str, width: int, height: int, seed: int, modelname: str, counter: int, time_format: str, sampler_name: str, steps: int, cfg: float, scheduler_name: str, denoise: float, clip_skip: int, custom: str) -> str:
+    # Process custom time_format patterns first
+    filename = apply_custom_time_format(filename)
     filename = filename.replace("%date", get_timestamp("%Y-%m-%d"))
     filename = filename.replace("%time", get_timestamp(time_format))
     filename = filename.replace("%model", parse_checkpoint_name(modelname))
@@ -234,7 +255,7 @@ class ImageSaverSimple:
         return {
             "required": {
                 "images":                ("IMAGE",    {                                                             "tooltip": "image(s) to save"}),
-                "filename":              ("STRING",   {"default": '%time_%basemodelname_%seed', "multiline": False, "tooltip": "filename (available variables: %date, %time, %model, %width, %height, %seed, %counter, %sampler_name, %steps, %cfg, %scheduler_name, %basemodelname, %denoise, %clip_skip)"}),
+                "filename":              ("STRING",   {"default": '%time_%basemodelname_%seed', "multiline": False, "tooltip": "filename (available variables: %date, %time, %time_format<format>, %model, %width, %height, %seed, %counter, %sampler_name, %steps, %cfg, %scheduler_name, %basemodelname, %denoise, %clip_skip)"}),
                 "path":                  ("STRING",   {"default": '', "multiline": False,                           "tooltip": "path to save the images (under Comfy's save directory)"}),
                 "extension":             (['png', 'jpeg', 'jpg', 'webp'], {                                         "tooltip": "file extension/type to save image as"}),
                 "lossless_webp":         ("BOOLEAN",  {"default": True,                                             "tooltip": "if True, saved WEBP files will be lossless"}),
@@ -306,7 +327,7 @@ class ImageSaver:
         return {
             "required": {
                 "images":                ("IMAGE",   {                                                             "tooltip": "image(s) to save"}),
-                "filename":              ("STRING",  {"default": '%time_%basemodelname_%seed', "multiline": False, "tooltip": "filename (available variables: %date, %time, %model, %width, %height, %seed, %counter, %sampler_name, %steps, %cfg, %scheduler, %basemodelname, %denoise, %clip_skip)"}),
+                "filename":              ("STRING",  {"default": '%time_%basemodelname_%seed', "multiline": False, "tooltip": "filename (available variables: %date, %time, %time_format<format>, %model, %width, %height, %seed, %counter, %sampler_name, %steps, %cfg, %scheduler_name, %basemodelname, %denoise, %clip_skip)"}),
                 "path":                  ("STRING",  {"default": '', "multiline": False,                           "tooltip": "path to save the images (under Comfy's save directory)"}),
                 "extension":             (['png', 'jpeg', 'jpg', 'webp'], {                                        "tooltip": "file extension/type to save image as"}),
             },
