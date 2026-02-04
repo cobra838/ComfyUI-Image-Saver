@@ -276,9 +276,9 @@ class ImageSaverSimple:
             },
         }
 
-    RETURN_TYPES = ("STRING","STRING")
-    RETURN_NAMES = ("hashes","a1111_params")
-    OUTPUT_TOOLTIPS = ("Comma-separated list of the hashes to chain with other Image Saver additional_hashes","Written parameters to the image metadata")
+    RETURN_TYPES = ("IMAGE","STRING","STRING")
+    RETURN_NAMES = ("images","hashes","a1111_params")
+    OUTPUT_TOOLTIPS = ("Pass-through images for chaining with other nodes","Comma-separated list of the hashes to chain with other Image Saver additional_hashes","Written parameters to the image metadata")
     FUNCTION = "save_images"
 
     OUTPUT_NODE = True
@@ -313,7 +313,7 @@ class ImageSaverSimple:
         subfolder = os.path.normpath(path)
 
         result: dict[str, Any] = {
-            "result": (metadata.final_hashes, metadata.a111_params),
+            "result": (images, metadata.final_hashes, metadata.a111_params),
         }
 
         if show_preview:
@@ -363,9 +363,9 @@ class ImageSaver:
             },
         }
 
-    RETURN_TYPES = ("STRING","STRING")
-    RETURN_NAMES = ("hashes","a1111_params")
-    OUTPUT_TOOLTIPS = ("Comma-separated list of the hashes to chain with other Image Saver additional_hashes","Written parameters to the image metadata")
+    RETURN_TYPES = ("IMAGE","STRING","STRING")
+    RETURN_NAMES = ("images","hashes","a1111_params")
+    OUTPUT_TOOLTIPS = ("Pass-through images for chaining with other nodes","Comma-separated list of the hashes to chain with other Image Saver additional_hashes","Written parameters to the image metadata")
     FUNCTION = "save_files"
 
     OUTPUT_NODE = True
@@ -415,7 +415,7 @@ class ImageSaver:
         subfolder = os.path.normpath(path)
 
         result: dict[str, Any] = {
-            "result": (metadata.final_hashes, metadata.a111_params),
+            "result": (images, metadata.final_hashes, metadata.a111_params),
         }
 
         if show_preview:
